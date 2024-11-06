@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserDetails {
+  userId               Int             @id @default(autoincrement())
+  username             String
+  email                String          @unique
+  password             String
+  profilePictureUrl    String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  accountId            Int?
+  balanceId            Int?
+  savedAccountId       Int?
+  transactions         Transaction[]   @relation("UserTransactions")
+  savings              SavingAccount[] @relation(fields: [savedAccountId], references: [savingId])
+  accounts             AccountDetails? @relation(fields: [accountId], references: [accountId])
+  balance              AccountBalance? @relation("UserBalance", fields: [balanceId], references: [balanceId])
+}
+
+model AccountDetails {
+  accountId            Int             @id @default(autoincrement())
+  bankName             String
+  accountHolderName    String
+  accountPin           Int             @unique
+  currentBalanceId     Int?
+  userId               Int?
+  currentBalance       AccountBalance? @relation("AccountCurrentBalance", fields: [currentBalanceId], references: [balanceId])
+  user                 UserDetails?    @relation(fields: [userId], references: [userId])
+}
+
+model AccountBalance {
+  balanceId            Int             @id @default(autoincrement())
+  currentBalance       Int
+  totalBalance         Int
+  account              AccountDetails? @relation("AccountCurrentBalance", fields: [balanceId], references: [balanceId])
+  user                 UserDetails?    @relation("UserBalance", fields: [balanceId], references: [balanceId])
+}
+
+model Transaction {
+  transactionId        Int             @id @default(autoincrement())
+  transactionType      TransactionType
+  amount               Int
+  transactionDate      DateTime        @default(now())
+  userId               Int
+  user                 UserDetails     @relation(fields: [userId], references: [userId])
+  balanceId            Int
+  balance              AccountBalance  @relation(fields: [balanceId], references: [balanceId])
+}
+
+model SavingAccount {
+  savingId             Int             @id @default(autoincrement())
+  savedBalance         Int
+  userId               Int
+  user                 UserDetails     @relation(fields: [userId], references: [userId])
+}
+
+enum TransactionType {
+  DEBIT
+  CREDIT
+}
